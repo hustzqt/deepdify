@@ -1,94 +1,91 @@
-import { Redis } from "@upstash/redis"
-import type { VercelRequest, VercelResponse } from "@vercel/node"
+import { Redis } from "@upstash/redis";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+
+// 定义知识项的类型（可根据实际字段调整）
+interface KnowledgeItem {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  tags: string[];
+  author: string;
+  createdAt: string;
+}
 
 const redis = new Redis({
   url: process.env.KV_REST_API_URL!,
   token: process.env.KV_REST_API_TOKEN!,
-})
+});
 
-const KNOWLEDGE_KEY = "knowledge:items"
+const KNOWLEDGE_KEY = "knowledge:items";
 
 export default async function handler(
   request: VercelRequest,
   response: VercelResponse
 ) {
-  const { method } = request
-  const { id } = request.query
+  const { method } = request;
+  const { id } = request.query;
 
   if (!id || typeof id !== "string") {
-    return response.status(400).json({ error: "Invalid ID" })
+    return response.status(400).json({ error: "Invalid ID" });
   }
 
-  // PUT /api/knowledge/:id - 更新知识
-  if (method === "PUT") {
-    try {
-      // 检查管理员权限
-      const adminEmail = request.headers["x-admin-email"] as string
-      if (adminEmail !== "admin@deepdify.com") {
-        return response.status(403).json({ error: "Forbidden: Admin access required" })
-      }
+  // 管理员验证（统一处理）
+  const adminEmail = request.headers["x-admin-email"] as string;
+  if (adminEmail !== "admin@deepdify.com") {
+    return response.status(403).json({ error: "Forbidden: Admin access required" });
+  }
 
-      const items = await redis.lrange<KnowledgeItem>(KNOWLEDGE_KEY, 0, -1)
-      const index = items.findIndex((item) => item.id === id)
-
+  try {
+    if (method === "PUT") {
+      // 处理更新知识
+      const items = await redis.lrange<KnowledgeItem>(KNOWLEDGE_KEY, 0, -1);
+      const index = items.findIndex((item) => item.id === id);
       if (index === -1) {
-        return response.status(404).json({ error: "Knowledge item not found" })
+        return response.status(404).json({ error: "Knowledge item not found" });
       }
 
-      const { title, description, type, tags, author } = request.body
-
+      const { title, description, type, tags, author } = request.body;
       const updatedItem: KnowledgeItem = {
         ...items[index],
-        ...(title && { title }),
-        ...(description && { description }),
-        ...(type && { type }),
-        ...(tags && { tags }),
-        ...(author && { author }),
-        updatedAt: new Date().toISOString().split("T")[0],
+        title: title || items[index].title,
+        description: description || items[index].description,
+        type: type || items[index].type,
+        tags: tags || items[index].tags,
+        author: author || items[index].author,
+      };
+
+      // 更新列表中的对应项
+      items[index] = updatedItem;
+      await redis.del(KNOWLEDGE_KEY);
+      if (items.length > 0) {
+        await redis.rpush(KNOWLEDGE_KEY, ...items);
       }
 
-      await redis.lset(KNOWLEDGE_KEY, index, updatedItem)
-      return response.status(200).json(updatedItem)
-    } catch (error) {
-      console.error("Error updating knowledge:", error)
-      return response.status(500).json({ error: "Failed to update knowledge" })
+      return response.status(200).json(updatedItem);
+    } else if (method === "DELETE") {
+      // 处理删除知识
+      const items = await redis.lrange<KnowledgeItem>(KNOWLEDGE_KEY, 0, -1);
+      const newItems = items.filter((item) => item.id !== id);
+
+      if (items.length === newItems.length) {
+        return response.status(404).json({ error: "Knowledge item not found" });
+      }
+
+      // 删除原列表并重新添加新列表
+      await redis.del(KNOWLEDGE_KEY);
+      if (newItems.length > 0) {
+        await redis.rpush(KNOWLEDGE_KEY, ...newItems);
+      }
+
+      return response.status(200).json({ success: true });
+    } else {
+      // 其他方法（GET等）暂时不支持，返回405
+      response.setHeader("Allow", ["PUT", "DELETE"]);
+      return response.status(405).json({ error: `Method ${method} Not Allowed` });
     }
+  } catch (error) {
+    console.error("API error:", error);
+    return response.status(500).json({ error: "Internal server error" });
   }
-
-  // DELETE /api/knowledge/:id - 删除知识
-  if (method === "DELETE") {
-    try {
-      // 检查管理员权限
-      const adminEmail = request.headers["x-admin-email"] as string
-      if (adminEmail !== "admin@deepdify.com") {
-        return response.status(403).json({ error: "Forbidden: Admin access required" })
-      }
-
-      const items = await redis.lrange<KnowledgeItem>(KNOWLEDGE_KEY, 0, -1)
-      const index = items.findIndex((item) => item.id === id)
-
-      if (index === -1) {
-        return response.status(404).json({ error: "Knowledge item not found" })
-      }
-
-      await redis.lrem(KNOWLEDGE_KEY, 1, items[index])
-      return response.status(200).json({ success: true })
-    } catch (error) {
-      console.error("Error deleting knowledge:", error)
-      return response.status(500).json({ error: "Failed to delete knowledge" })
-    }
-  }
-
-  return response.status(405).json({ error: "Method not allowed" })
-}
-
-interface KnowledgeItem {
-  id: string
-  title: string
-  description: string
-  type: string
-  tags: string[]
-  author: string
-  updatedAt: string
-  createdAt?: string
 }
