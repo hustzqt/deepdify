@@ -2,10 +2,12 @@ import { Link, useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { useNews } from "@/contexts/NewsContext"
+import { useAdminAuth } from "@/hooks/useAdminAuth"
 
 export function Header() {
   const { user, logout } = useAuth()
   const { hasUnreadToday } = useNews()
+  const { isAdmin } = useAdminAuth()
   const location = useLocation()
 
   const handleLogout = () => {
@@ -37,6 +39,11 @@ export function Header() {
         <div className="flex flex-1 items-center justify-end space-x-2">
           {user ? (
             <nav className="flex items-center space-x-2">
+              {isAdmin && (
+                <Button variant="ghost" asChild>
+                  <Link to="/admin">管理后台</Link>
+                </Button>
+              )}
               <Button variant="ghost" asChild>
                 <Link to="/profile">个人中心</Link>
               </Button>

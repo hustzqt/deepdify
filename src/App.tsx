@@ -10,6 +10,7 @@ import { RegisterPage } from "@/pages/RegisterPage"
 import { ProfilePage } from "@/pages/ProfilePage"
 import { KnowledgePage } from "@/pages/KnowledgePage"
 import { NewsPage } from "@/pages/NewsPage"
+import { AdminPage } from "@/pages/AdminPage"
 
 function AppContent() {
   const { user } = useAuth()
@@ -39,6 +40,7 @@ function AppContent() {
           </Route>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Routes>
       </BrowserRouter>
     </NewsProvider>
