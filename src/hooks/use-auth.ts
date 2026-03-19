@@ -3,6 +3,7 @@
 // 功能: 认证逻辑封装 Hook
 
 import { useEffect } from 'react'
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { useAuthStore } from '@/stores/auth-store'
 import { createClient } from '@/lib/supabase/client'
 
@@ -52,7 +53,8 @@ export function useAuth() {
     
     try {
       const result = supabase.auth.onAuthStateChange(
-        async (event, session) => {
+        // ✅ 修复: 添加类型注解 (event: AuthChangeEvent, session: Session | null)
+        async (event: AuthChangeEvent, session: Session | null) => {
           if (event === 'SIGNED_IN' && session?.user) {
             setUser({
               id: session.user.id,
