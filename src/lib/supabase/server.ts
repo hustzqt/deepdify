@@ -4,34 +4,38 @@
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { SUPABASE_CONFIG } from '@/lib/constants'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const isConfigured = supabaseUrl && supabaseKey
 
 export function createClient() {
+  if (!isConfigured) {
+    console.warn('⚠️ Supabase 未配置，使用模拟客户端')
+    return {
+      auth: {
+        getSession: async () => ({ data: { session: null }, error: null }),
+      },
+    } as any
+  }
+
   const cookieStore = cookies()
 
-  return createServerClient(
-    SUPABASE_CONFIG.url!,
-    SUPABASE_CONFIG.anonKey!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options })
-          } catch (error) {
-            // 在 Server Component 中调用时可能会失败
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
-            // 在 Server Component 中调用时可能会失败
-          }
-        },
+  return createServerClient(supabaseUrl!, supabaseKey!, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value
       },
-    }
-  )
+      set(name: string, value: string, options: CookieOptions) {
+        try {
+          cookieStore.set({ name, value, ...options })
+        } catch (error) {}
+      },
+      remove(name: string, options: CookieOptions) {
+        try {
+          cookieStore.set({ name, value: '', ...options })
+        } catch (error) {}
+      },
+    },
+  })
 }
