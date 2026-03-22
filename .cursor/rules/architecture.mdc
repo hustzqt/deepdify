@@ -1,0 +1,55 @@
+---
+description: 项目架构规范 - Next.js + Prisma 技术栈
+globs: ["src/**/*", "prisma/**/*", "*.config.*"]
+alwaysApply: true
+---
+
+# 📁 项目结构规范
+
+## 目录结构
+
+# 🏗️ 技术栈规范
+
+| 类别 | 技术 | 说明 |
+|------|------|------|
+| 框架 | Next.js 14+ | App Router 模式 |
+| 语言 | TypeScript | 严格模式，禁止使用 any |
+| 数据库 | PostgreSQL + Prisma | ORM 和迁移管理 |
+| 认证 | NextAuth.js / 自定义 JWT | 根据项目选择 |
+| 样式 | Tailwind CSS | 原子化 CSS |
+| UI 库 | shadcn/ui | 组件基础 |
+| 状态管理 | Zustand / React Context | 轻量级状态管理 |
+| 表单 | React Hook Form + Zod | 表单验证 |
+| 测试 | Vitest + React Testing Library | 单元测试 |
+
+# 📏 命名与文件规范
+
+## 文件命名
+- **组件文件**：PascalCase.tsx（如 `UserProfile.tsx`）
+- **页面文件**：Next.js 约定（`page.tsx`, `layout.tsx`）
+- **工具函数**：camelCase.ts（如 `formatDate.ts`）
+- **常量**：UPPER_SNAKE_CASE（如 `MAX_RETRY_COUNT`）
+- **类型文件**：PascalCase.types.ts（如 `user.types.ts`）
+
+## 代码规范
+- 使用 **函数式组件** + Hooks，禁用 class 组件
+- Props 必须定义 TypeScript 接口
+- 异步函数使用 try-catch 处理错误
+- API 路由必须验证输入（Zod schema）
+- 数据库查询使用 Prisma，禁止直接写 SQL
+
+# 🔒 安全规范
+
+- 不在客户端暴露 API 密钥
+- 敏感操作（删除、修改权限）需要二次确认
+- 上传文件验证类型和大小
+- API 路由检查用户认证状态
+- 使用环境变量存储敏感信息（.env.local）
+
+# 🧪 开发流程
+
+1. **修改数据库** → 先改 `schema.prisma` → 运行 `npx prisma migrate dev`
+2. **创建 API** → 在 `app/api/` 下创建路由 → 使用 Prisma 客户端
+3. **创建页面** → 在 `app/` 下创建目录 → 使用 Server Component 优先
+4. **创建组件** → 区分 Server/Client Component → 放在 `components/`
+5. **添加类型** → 在 `types/` 下定义共享类型

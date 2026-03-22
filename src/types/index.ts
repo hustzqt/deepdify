@@ -2,6 +2,14 @@
 // 模块: 全局类型定义
 // 功能: 项目通用的 TypeScript 类型
 
+export type {
+  RegisterDTO,
+  RegisteredUser,
+  RegisterSuccessResponse,
+  RegisterErrorCode,
+  RegisterErrorResponse,
+} from './user'
+
 // 用户类型
 export interface User {
     id: string;

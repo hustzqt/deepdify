@@ -1,4 +1,4 @@
-﻿// src/lib/validations/auth.ts
+// src/lib/validations/auth.ts
 // 模块: M1_auth
 // 功能: 认证相关 Zod 验证 Schema
 
@@ -15,5 +15,12 @@ export const registerSchema = z.object({
   password: z.string().min(6, '密码至少6位'),
 })
 
+/** Body for completing password reset via API. */
+export const resetPasswordBodySchema = z.object({
+  token: z.string().min(1, '缺少重置令牌'),
+  password: z.string().min(6, '密码至少6位'),
+})
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
+export type ResetPasswordBodyInput = z.infer<typeof resetPasswordBodySchema>
