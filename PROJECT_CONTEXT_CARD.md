@@ -1,59 +1,127 @@
-# 🎯 DEEPDIFY 项目上下文卡片 v1.0
-# 用途：每次新AI对话时，粘贴此卡片作为第一条消息
-# 更新时间：2025-01-XX
+# PROJECT_CONTEXT_CARD.md
+## BrandCraft（Deepdify Evolution）项目上下文卡片
 
-## 项目一句话
-跨境电商AI工作台，Next.js 14全栈应用
+═══════════════════════════════════════════════════════════════
+一、项目基础信息
+═══════════════════════════════════════════════════════════════
 
-## 技术栈（锁死，不可变更）
-- Next.js 14.2.21 (App Router) | TypeScript 5.x
-- NextAuth v5 (Auth.js) | Prisma 5.x | Neon PostgreSQL
-- React Hook Form 7.51.0 | @hookform/resolvers 3.3.4 | Zod 3.22.4
-- shadcn/ui | Tailwind CSS | Zustand
-- pnpm | Windows + PowerShell + VS Code
+项目名称: BrandCraft（品牌工匠）
+项目代号: brandcraft-v1
+项目路径: D:\cursorpro\deepdify
+Git仓库: [待初始化远程仓库]
 
-## 当前阶段
-Phase 2 Sprint 1 验收测试
+演进历史:
+  - Day 1-4: Deepdify Studio（基础认证与Profile管理）
+  - Day 0: Phase 2结案，BrandCraft Phase 1启动（AI集成）
 
-## 当前阻断点
-登录页 signIn('credentials', {redirect:false}) 不触发网络请求
-- 后端API正常（手动fetch返回200）
-- 前端signIn()内部未发起fetch（Network面板无请求）
+═══════════════════════════════════════════════════════════════
+二、当前状态（实时更新）
+═══════════════════════════════════════════════════════════════
 
-## 已完成的模块
-- ✅ M1_auth 后端（注册/登录API、Prisma模型、密码哈希）
-- ✅ M2_dashboard 布局（Sidebar、Header、Dashboard页面）
-- ⏳ M1_auth 前端跳转（当前阻断）
+当前阶段: Phase 0（Day 0）债务清理
+当前任务: 登录Bug修复（阻断点解除）
+状态: 🟡 进行中（代码已提供，待验证）
 
-## 绝对禁止（已验证失败的方案）
-1. ❌ 升级Next.js到15/16（与resolvers冲突）
-2. ❌ 升级@hookform/resolvers到latest（TypeError）
-3. ❌ PowerShell Set-Content写入代码（字符转义损坏）
-4. ❌ 仅清缓存/重启dev（非缓存问题）
-5. ❌ 使用next-auth/react原生signIn()（本环境下不触发请求）
+最近Git提交:
+  - 待提交：登录修复（fetch方案替代signIn）
 
-## 当前尝试方向
-绕过signIn()，直接用fetch调用 /api/auth/csrf + /api/auth/callback/credentials
+文件预算: 8/15（剩余7个）
+成本消耗: ¥0（未开始AI调用）
 
-## 关键文件路径
-| 文件 | 路径 |
-|------|------|
-| 认证配置 | src/lib/auth.ts |
-| 登录页（阻断） | src/app/(auth)/login/page.tsx |
-| 中间件 | src/middleware.ts |
-| Prisma模型 | prisma/schema.prisma |
-| 环境变量 | .env |
+阻断点:
+  - [ ] 登录修复验证（test@deepdify.com→Dashboard）
+  - [ ] Session持久化验证（刷新保持登录）
+  - [ ] 反向保护验证（已登录用户访问/login跳转）
 
-## 协作规则
-- 我是IT小白，需要精确的复制粘贴指令
-- 代码在聊天中给出，我手动粘贴到VS Code
-- 每步完成后输出CHECKPOINT
-- 修改前先确认当前文件内容（cat命令）
-- 完整宪法见：CONSTITUTION_COMPACT.md v2.1
+下一步（Day 1）:
+  1. Dify CE Docker部署（端口3001）
+  2. DeepSeek模型配置
+  3. 首个API连通测试（浏览器Console→Dify→中文回复）
 
-## 本次对话目标
-修复BUG-005（登录页signIn不触发请求），执行SOP-004验收：
-1. 重写 src/app/(auth)/login/page.tsx，绕过signIn()，直接使用fetch调用/api/auth/csrf + /api/auth/callback/credentials
-2. 登录成功后强制跳转到/dashboard  
-3. 按SOP-004验证登录功能（Network有请求、Console无报错、跳转成功）
-4. 验收通过后执行SOP-005验证Session持久化
+═══════════════════════════════════════════════════════════════
+三、技术环境（精确版本）
+═══════════════════════════════════════════════════════════════
+
+操作系统: Windows 11
+IDE: VS Code / Cursor
+Shell: PowerShell（仅命令，不写复杂代码）
+包管理: pnpm
+
+Node.js: 18+
+Next.js: 14.2.21（锁定）
+TypeScript: 5.x Strict
+数据库: Neon Serverless PostgreSQL（新加坡节点）
+ORM: Prisma 5.x
+
+AI引擎: Dify CE（待部署）
+模型: DeepSeek-V3（默认）/ GPT-4o-mini（标准）/ GPT-4o（高级）
+
+端口占用:
+  - 3000: Next.js开发服务器
+  - 3001: Dify CE（预留）
+
+═══════════════════════════════════════════════════════════════
+四、关键文档位置
+═══════════════════════════════════════════════════════════════
+
+宪法（必须加载）:
+  - CONSTITUTION.md（完整版）
+  - CONSTITUTION_COMPACT.md（AI快速加载版）
+
+架构文档:
+  - docs/architecture/SYSTEM_DESIGN.md（系统架构）
+  - docs/architecture/ROADMAP_30DAYS.md（30天路线图）
+  - docs/decisions/（ADR决策记录）
+
+Dify资产:
+  - docs/prompts/（Prompt版本库）
+  - docs/tool-evaluation.md（开源工具评估）
+
+运维文档:
+  - docs/operations/SOP.md（标准操作流程）
+  - BUG_ARCHIVE.md（Bug档案）
+
+═══════════════════════════════════════════════════════════════
+五、快速检查清单（遇到问题时）
+═══════════════════════════════════════════════════════════════
+
+代码没反应:
+  1. cat 文件路径 | findstr "关键词"（确认代码已保存）
+  2. VS Code显示白点？→ Ctrl+S保存
+  3. pnpm dev是否运行？→ 控制台无报错
+  4. 硬刷新：Ctrl+Shift+R
+
+依赖问题:
+  1. 删除node_modules：Remove-Item -Recurse -Force node_modules
+  2. 重装：pnpm install
+  3. 锁定版本检查：package.json中resolvers是否为3.3.4
+
+数据库问题:
+  1. 连接测试：npx prisma db pull
+  2. 迁移状态：npx prisma migrate status
+  3. Studio查看：npx prisma studio
+
+AI不工作:
+  1. Dify是否运行？docker compose ps
+  2. 端口3001可访问？http://localhost:3001
+  3. API Key有效？Dify控制台检查
+  4. 查看Network标签：/api/dify请求状态
+
+═══════════════════════════════════════════════════════════════
+六、联系人与资源
+═══════════════════════════════════════════════════════════════
+
+开发者: 浔真
+AI助手: Claude（通过Cursor）
+技术顾问: [待补充]
+
+关键资源:
+  - Dify文档: https://docs.dify.ai
+  - DeepSeek API: https://platform.deepseek.com
+  - NextAuth文档: https://authjs.dev
+  - shadcn/ui: https://ui.shadcn.com
+
+═══════════════════════════════════════════════════════════════
+最后更新: Day 0
+更新者: AI助手（基于宪法v3.0）
+═══════════════════════════════════════════════════════════════

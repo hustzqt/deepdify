@@ -14,6 +14,7 @@ import { registerSchema, type RegisterInput } from '@/lib/validations/auth'
 
 /**
  * Registration form with Zod + React Hook Form and TanStack Query mutation.
+ * Submits via POST fetch to `/api/auth/register` (JSON body); `method="post"` on the form avoids accidental GET navigation.
  */
 export function RegisterForm() {
   const router = useRouter()
@@ -45,6 +46,7 @@ export function RegisterForm() {
 
   return (
     <form
+      method="post"
       onSubmit={handleSubmit((values) => mutation.mutate(values))}
       className="space-y-4"
     >

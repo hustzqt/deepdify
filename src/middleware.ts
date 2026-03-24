@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
@@ -8,8 +8,11 @@ export function middleware(request: NextRequest) {
   const isLoggedIn = !!sessionToken
   const { pathname } = request.nextUrl
 
-  // 未登录用户访问 dashboard 重定向到 login
-  if (pathname.startsWith("/dashboard") && !isLoggedIn) {
+  // 未登录用户访问受保护区域重定向到 login（含 /profile，与 (dashboard) 分组路由）
+  if (
+    (pathname.startsWith("/dashboard") || pathname === "/profile") &&
+    !isLoggedIn
+  ) {
     const loginUrl = new URL("/login", request.url)
     return NextResponse.redirect(loginUrl)
   }
@@ -24,5 +27,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login"]
+  matcher: ["/dashboard/:path*", "/profile", "/login"],
 }

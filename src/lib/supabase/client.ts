@@ -4,6 +4,8 @@
 
 import { createBrowserClient } from '@supabase/ssr'
 
+type SupabaseBrowserClient = ReturnType<typeof createBrowserClient>
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -22,7 +24,7 @@ export function createClient() {
         signOut: async () => {},
         onAuthStateChange: () => ({ subscription: { unsubscribe: () => {} } }),
       },
-    } as any
+    } as unknown as SupabaseBrowserClient
   }
 
   return createBrowserClient(supabaseUrl!, supabaseKey!)

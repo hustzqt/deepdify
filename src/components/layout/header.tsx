@@ -19,7 +19,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { Menu, User, LogOut, Settings } from 'lucide-react'
 
 export function Header() {
-  const { toggleSidebar, sidebarOpen } = useUIStore()
+  const { toggleSidebar } = useUIStore()
   const { user, signOut } = useAuth()
 
   return (

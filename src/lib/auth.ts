@@ -1,4 +1,4 @@
-﻿import type { NextAuthConfig, Session, User } from "next-auth"
+import type { NextAuthConfig, User } from "next-auth"
 import type { JWT } from "next-auth/jwt"
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -110,7 +110,7 @@ const authConfig: NextAuthConfig = {
   ],
   
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) { 
         token.id = user.id; 
         token.role = user.role 

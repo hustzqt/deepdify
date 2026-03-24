@@ -39,7 +39,7 @@ function mockLoginFetches(opts: {
 }) {
   const { callbackStatus, callbackBody, callbackJson } = opts
   vi.mocked(globalThis.fetch).mockImplementation(
-    async (input: RequestInfo | URL, init?: RequestInit) => {
+    async (input: RequestInfo | URL, _init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input.toString()
       if (url.includes('/api/auth/csrf')) {
         return new Response(JSON.stringify({ csrfToken: 'test-csrf-token' }), {

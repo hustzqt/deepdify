@@ -76,8 +76,8 @@ export async function PUT(request: NextRequest) {
       success: true,
       message: '如果该邮箱存在，我们已发送重置链接，请检查邮件或控制台输出',
     })
-  } catch (error: any) {
-    if (error.message === 'TOO_FREQUENT') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'TOO_FREQUENT') {
       return NextResponse.json(
         { 
           success: false, 

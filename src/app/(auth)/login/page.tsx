@@ -1,7 +1,6 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +12,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -66,18 +64,27 @@ export default function LoginPage() {
         return
       }
 
-      let data: any = null
+      let data: unknown = null
       try {
         data = await callbackRes.json()
         console.log('[LOGIN] 响应数据:', data)
-      } catch (parseError) {
+      } catch {
         console.log('[LOGIN] 响应不是 JSON 格式')
       }
 
-      if (data?.error) {
-        const errorMsg = data.error === 'CredentialsSignin' 
-          ? '邮箱或密码错误' 
-          : data.error
+      const errorField =
+        typeof data === 'object' &&
+        data !== null &&
+        'error' in data &&
+        typeof (data as { error: unknown }).error === 'string'
+          ? (data as { error: string }).error
+          : undefined
+
+      if (errorField !== undefined) {
+        const errorMsg =
+          errorField === 'CredentialsSignin'
+            ? '邮箱或密码错误'
+            : errorField
         throw new Error(errorMsg)
       }
 
@@ -88,9 +95,13 @@ export default function LoginPage() {
       console.log('[LOGIN] 兜底跳转处理')
       window.location.href = '/dashboard'
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[LOGIN_ERROR]', err)
-      setError(err.message || '登录异常，请重试')
+      const message =
+        err instanceof Error
+          ? err.message || '登录异常，请重试'
+          : '登录异常，请重试'
+      setError(message)
       setLoading(false)
     }
   }

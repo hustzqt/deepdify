@@ -18,12 +18,23 @@ model User {
   password String
   role     String  @default("USER")
 
-  // 密码重置字段（Day 3 新增）
+  emailVerified DateTime?
+  image         String? // NextAuth default avatar field
+
+  // Day 3 安全字段
   passwordResetToken   String?   @unique
   passwordResetExpires DateTime?
   passwordResetCreated DateTime?
 
+  // Day 4 Profile
+  company   String? @db.VarChar(100)
+  phone     String? @db.VarChar(50)
+  timezone  String  @default("Asia/Shanghai") @db.VarChar(50)
+  language  String  @default("zh") @db.VarChar(10)
+  bio       String? @db.VarChar(500)
+
   // 关系字段（修复：添加反向引用）
+  brands   Brand[]
   accounts Account[]
   sessions Session[]
 
@@ -72,4 +83,38 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// Brand 品牌模型
+model Brand {
+  id          String   @id @default(cuid())
+  name        String   // 品牌名称
+  description String?  // 品牌描述
+  industry    String   // 行业类别（fashion/electronics/home/etc）
+  tone        String   @default("professional") // 语调：professional/friendly/luxury/playful
+  targetAudience String? // 目标受众描述
+
+  // 视觉风格
+  colorPrimary   String? // 主色
+  colorSecondary String? // 辅色
+  fontHeading    String? // 标题字体偏好
+  fontBody       String? // 正文字体偏好
+
+  // 内容规范
+  contentGuidelines String? @db.Text // 内容规范 JSON
+  keywords          String[] // 品牌关键词
+
+  // Dify 集成
+  difyKnowledgeId   String?  // Dify 知识库 ID（上传文档后生成）
+  difyDatasetId     String?  // Dify Dataset ID
+
+  // 关联
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("brands")
 }

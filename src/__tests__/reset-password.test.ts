@@ -1,7 +1,13 @@
 /** @vitest-environment node */
 import { compare } from 'bcrypt'
-import type { User } from '@prisma/client'
+// 从 Prisma 生成的类型导入
+import type { PrismaClient, User } from '@prisma/client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+/** Args for `prisma.user.update` — use `PrismaClient` so types are stable when `prisma` is mocked. */
+type UserUpdateCallArgs = Parameters<PrismaClient['user']['update']>[0]
+/** Args for `prisma.user.findFirst` */
+type UserFindFirstCallArgs = Parameters<PrismaClient['user']['findFirst']>[0]
 import {
   generatePasswordResetToken,
   resetPasswordWithToken,
@@ -20,9 +26,16 @@ function mockUser(overrides: Partial<User>): User {
     name: null,
     password: 'p',
     role: 'USER',
+    emailVerified: null,
+    image: null,
     passwordResetToken: null,
     passwordResetExpires: null,
     passwordResetCreated: null,
+    company: null,
+    phone: null,
+    timezone: 'Asia/Shanghai',
+    language: 'zh',
+    bio: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
@@ -47,7 +60,7 @@ describe('reset-password email helpers', () => {
     process.env.AUTH_SECRET = 'unit-test-auth-secret-min-32-chars!!'
 
     vi.mocked(prisma.user.update).mockImplementation(
-      (async (args) => {
+      (async (args: UserUpdateCallArgs) => {
         const data = args.data as {
           passwordResetToken?: string | null
           password?: string
@@ -59,11 +72,11 @@ describe('reset-password email helpers', () => {
           id: 'user-1',
           email: 'a@b.com',
         })
-      }) as typeof prisma.user.update
+      }) as unknown as typeof prisma.user.update
     )
 
     vi.mocked(prisma.user.findFirst).mockImplementation(
-      (async (args) => {
+      (async (args: UserFindFirstCallArgs | undefined) => {
         if (!args) {
           return null
         }
@@ -93,7 +106,7 @@ describe('reset-password email helpers', () => {
           })
         }
         return null
-      }) as typeof prisma.user.findFirst
+      }) as unknown as typeof prisma.user.findFirst
     )
   })
 
@@ -141,7 +154,9 @@ describe('reset-password email helpers', () => {
     await resetPasswordWithToken(token, 'newpass99')
 
     expect(prisma.user.update).toHaveBeenCalled()
-    const calls = vi.mocked(prisma.user.update).mock.calls
+    const calls = vi.mocked(prisma.user.update).mock.calls as ReadonlyArray<
+      readonly [UserUpdateCallArgs]
+    >
     const resetCall = calls.find((c) => {
       const data = c[0]?.data as { password?: string } | undefined
       return typeof data?.password === 'string'
