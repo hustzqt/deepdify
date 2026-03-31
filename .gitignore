@@ -47,3 +47,6 @@ next-env.d.ts
 
 # Nested workspace (incomplete clone / not main app)
 /prometheus-ai/
+
+# Cursor MCP local config (may contain secrets)
+.cursor/mcp.json
