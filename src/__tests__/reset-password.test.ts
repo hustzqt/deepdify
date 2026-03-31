@@ -60,7 +60,7 @@ describe('reset-password email helpers', () => {
     process.env.AUTH_SECRET = 'unit-test-auth-secret-min-32-chars!!'
 
     vi.mocked(prisma.user.update).mockImplementation(
-      (async (args: UserUpdateCallArgs) => {
+      (async (args: UserUpdateCallArgs): Promise<User> => {
         const data = args.data as {
           passwordResetToken?: string | null
           password?: string
@@ -160,7 +160,7 @@ describe('reset-password email helpers', () => {
     const resetCall = calls.find((c) => {
       const data = c[0]?.data as { password?: string } | undefined
       return typeof data?.password === 'string'
-    })?.[0]
+    })?.[0] as UserUpdateCallArgs | undefined
     expect(resetCall?.where).toEqual({ id: 'uid-99' })
     const hashed = resetCall?.data?.password
     expect(typeof hashed).toBe('string')

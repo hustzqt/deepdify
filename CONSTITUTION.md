@@ -43,8 +43,8 @@ Phase 4（Day 22-30）：上线获客与迭代
 UI库：        shadcn/ui + Tailwind CSS（现有组件100%复用）
 状态管理：    Zustand（轻量，禁止Redux/MobX）
 表单：        React Hook Form 7.51.0（版本锁定）
-验证：        Zod 3.22.4
-验证桥接：    @hookform/resolvers 3.3.4（⚠️ 禁止升级到latest，已验证冲突）
+验证：        Zod **^4.x**（历史「3.22.4」以 **附录 C** 为准）
+验证桥接：    @hookform/resolvers **^5.x**（与 Zod 4 配套；历史「3.3.4」见 **附录 C**；⚠️ 禁止盲升 major、未回归即 latest）
 认证：        NextAuth.js v5（Auth.js）- 修复后版本
 
 2.2 API层（粘合层 30%）
@@ -56,18 +56,27 @@ UI库：        shadcn/ui + Tailwind CSS（现有组件100%复用）
 
 2.3 AI层（Dify核心 70%）
 -----------------------
-编排工具：    Dify Community Edition（Docker部署，禁用遥测）
-模型策略：
-  默认：      DeepSeek-V3（成本优先，¥0.002/1K tokens）
-  标准：      GPT-4o-mini（质量平衡，¥0.015/1K tokens）
-  高级：      GPT-4o/Claude-3.5（付费功能，¥0.12/1K tokens）
+编排工具：    Dify Community Edition（Docker部署，禁用遥测；遥测与出境要求见第八章）。
+
+模型策略（原则，不锁死厂商版本号）：
+  - **成本与质量分档**：默认档偏成本、标准档偏质量、关键路径偏稳定与可审计；具体 token 单价与盈亏参考 **第六章**。
+  - **逻辑别名（实现时在 Dify / 映射表中绑定真实 model id；附录B 多行、可并行）**：
+      • **deepseek-default** — 默认/成本优先  
+      • **kimi-2.5**（或 **moonshot-kimi**）— 标准档 **中文 / 国内电商主路径**（通常作为主用；**纳入预算与 SLA 前须小样本实测**）  
+      • **gpt-4o-mini** — 标准档 **英文 / 国际化 / 工具链**；与 Kimi **非二选一**，由 Workflow **条件分支**（语言、业务线、失败回退）与 **监控** 选用或互为备份  
+      • **gpt-5.3-codex** — 关键路径（发布、迁移、支付、核心逻辑）及开发侧强推理；**以各供应商控制台实际 API / model id 为准**。
+  - **映射维护**：逻辑别名 → 供应商与 model id 的对照表见 **附录B**（含标准档双轨）；变更时只更新映射与 Dify 控制台，不修改宪法条款编号。
+
+  **开发工具链补充**（IDE/自动化与升级策略，与用户侧 Dify Workflow 区分）：
+  - 失败触发升级、每请求 max_tokens、每任务 max_cost、每次最多 **2** 跳升级等，以 **docs/architecture/MODEL_ROUTING.md** 为准；与 **§2.2** Backend-for-AI、**§3.3** 故障降级、**第六章** 成本护栏一致执行。
+
 知识库：      Dify Knowledge Base（品牌文档分段存储）
-Workflow：    Chatflow/Workflow DSL（零代码编排）
+Workflow：    Chatflow/Workflow DSL（零代码编排）；模型切换用**条件节点**（如语言=zh→Kimi、en→GPT-4o-mini，或超时/校验失败→备份模型），绑定 **附录B** 别名；配合 **监控**（延迟、错误率、结构化输出失败率）再调路由。
 
 2.4 数据层
 ----------
 主数据库：    Neon Serverless PostgreSQL（新加坡节点）
-ORM：         Prisma 5.x（禁止原生SQL，禁止其他ORM）
+ORM：         Prisma（当前 **^6.x**；历史条文「5.x」以 **附录 C** 与 `package.json` 为准；禁止原生 SQL，禁止其他 ORM）
 缓存：        无（MVP阶段禁用Redis，避免复杂度）
 文件存储：    本地public/uploads（MVP）→ 后续迁移S3
 
@@ -346,7 +355,8 @@ UI必须三态：
 6.1 Token成本模型（人民币）
 ---------------------------
 DeepSeek-V3：    Input ¥0.002/1K | Output ¥0.008/1K  （默认）
-GPT-4o-mini：    Input ¥0.015/1K | Output ¥0.06/1K  （标准）
+GPT-4o-mini：    Input ¥0.015/1K | Output ¥0.06/1K  （标准档·**英文/国际化/工具链**并行路径，见附录B）
+Kimi（Moonshot）： 以供应商当期报价为准（标准档·**中文/国内电商**主路径，**与 4o-mini 并行**；**写入 SLA 与预算前须完成 A/B 实测**）
 GPT-4o：         Input ¥0.18/1K  | Output ¥0.72/1K  （高级）
 Claude-3.5：     Input ¥0.216/1K | Output ¥1.08/1K （高级）
 
@@ -435,6 +445,33 @@ AI确认语：
   - AI可提出建议，但必须标注"[建议：需人类确认]"
   - 人类明确指令时，AI必须执行（即使违背经验）
 
+7.6 模型路由规则与 API 配置（人机协作 + Backend-for-AI）
+------------------------------------------------------
+7.6.1 文档位置
+  - 详细规则（任务分档、fallback 链、失败升级条件、成本护栏）见：
+    **`docs/architecture/MODEL_ROUTING.md`**
+  - 与第二章「模型策略」关系：第二章与 **附录B** 定义 **产品侧**（含标准档 **Kimi + GPT-4o-mini 双轨**、条件分支与监控）；`MODEL_ROUTING.md` 定义 **开发工具链**（IDE/Agent 分层与升级），二者互补，不冲突。
+
+7.6.2 三层边界（必须遵守）
+  1. **用户浏览器**：只调用本应用同源 API（如 `POST /api/dify`），**禁止**暴露 Dify Key 或直连 OpenAI/DeepSeek。
+  2. **Next.js API Route**：`src/app/api/dify/route.ts` 等作为 **Backend-for-AI**，用服务端环境变量读取 `DIFY_API_KEY`，转发请求。
+  3. **Dify CE**：Workflow、知识库、模型切换在 **Dify 控制台** 配置（零代码优先，见第三章）。
+
+7.6.3 环境变量（与附录一致，开发时逐项核对）
+  - `DIFY_BASE_URL`：Dify 开放 API 根路径，须以 **`/v1`** 结尾（示例：`http://localhost/v1` 或 `http://localhost:3001/v1`，以实际 Docker/Nginx 为准）。
+  - `DIFY_API_KEY`：在 Dify 控制台「应用 / API 密钥」创建，格式多为 `app-...`。
+  - 若旧配置使用 `DIFY_API_BASE_URL`，与 `DIFY_BASE_URL` **同义**，项目代码以 **`DIFY_BASE_URL`** 为准（见 `src/lib/dify.ts`），两者择一即可、须同值。
+
+7.6.4 首次接通检查清单（建议顺序）
+  - [ ] Dify CE 已启动，浏览器可打开控制台，模型供应商已配置（如 DeepSeek API Key）。
+  - [ ] `.env` / `.env.local` 已写入 `DIFY_BASE_URL`、`DIFY_API_KEY`，**重启** `pnpm dev`。
+  - [ ] 用户已登录（Session 有效），在浏览器 **Console** 对同源执行 `POST /api/dify` 测试（见 `PROJECT_CONTEXT_CARD.md` 快速检查）。
+  - [ ] 若 401：检查 `auth()` 与 Cookie；若 5xx：检查 Dify 地址、Key、应用是否发布 Chatflow。
+
+7.6.5 与「模型路由」的衔接
+  - **IDE/Agent**（Cursor 等）按 `MODEL_ROUTING.md` 选择便宜→贵的模型；**应用内用户**不经过该文件，仅经过 **Dify Workflow** 内配置的模型与条件节点。
+  - 生产「成本熔断」与「日预算」仍以 **第六章** 与 **L3 降级** 为准；`MODEL_ROUTING.md` 中的 **每任务 max_cost、最多 2 跳升级** 主要针对 **开发自动化**，可在后续接入 `cost-tracker.ts` 时对齐。
+
 ═══════════════════════════════════════════════════════════════════
 第八章：数据安全与隐私（宪法第25条）
 ═══════════════════════════════════════════════════════════════════
@@ -510,14 +547,46 @@ DATABASE_URL="postgresql://username:password@host:port/database?sslmode=require"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="[32位以上随机字符串，openssl rand -base64 32生成]"
 
-# ===== Dify =====
-DIFY_API_BASE_URL="http://localhost:3001/v1"
+# ===== Dify（Next.js 读取 src/lib/dify.ts：DIFY_BASE_URL + DIFY_API_KEY）=====
+# 与网关/端口一致，末尾必须带 /v1；旧名 DIFY_API_BASE_URL 若存在，须与 DIFY_BASE_URL 同值
+DIFY_BASE_URL="http://localhost/v1"
 DIFY_API_KEY="app-[从Dify控制台获取]"
 DIFY_DAILY_BUDGET_MAX="50"
 
-# ===== AI Models（可选，如不用Dify内置配置） =====
+# ===== AI Models（可选：仅在非 Dify 直连或本地脚本需要时） =====
 DEEPSEEK_API_KEY="sk-[你的密钥]"
 OPENAI_API_KEY="sk-[你的密钥]"
+# Moonshot / Kimi（若采用 kimi-2.5 / moonshot-kimi 别名且不在 Dify 内统一托管密钥时）
+# MOONSHOT_API_KEY="sk-[你的密钥]"
+
+═══════════════════════════════════════════════════════════════════
+附录B：模型逻辑别名映射（维护表，不绑定具体版本号）
+═══════════════════════════════════════════════════════════════════
+
+说明：下列名称仅为**逻辑别名**；在 Dify「模型供应商」与各 Workflow 中选用的 **真实 model id** 以供应商控制台为准，团队更新时维护本表或等价 `docs/` 表格即可，**无需**因厂商改名而修订第二章条文。
+
+**标准档双轨（非二选一）**：偏中文/国内电商 **主路径** 以 **Kimi** 为主；偏国际化/英文/工具链 **并行保留 GPT-4o-mini**；由 Workflow **条件分支 + 监控** 分配流量或互为备份，**最优解不是二选一**。预算与 SLA 以 **第六章** + **实测数据** 定稿。
+
+| 逻辑别名 | 档位与用途 | 典型绑定方式 |
+|----------|------------|--------------|
+| **deepseek-default** | 默认 / 成本优先 | DeepSeek 供应商 + 所选对话模型 id |
+| **kimi-2.5** 或 **moonshot-kimi** | 标准档 · **中文 / 国内电商主路径**（通常主用） | Moonshot / Kimi 兼容 API 下的 model id |
+| **gpt-4o-mini** | 标准档 · **英文 / 国际化 / 工具链**（与 Kimi 并行） | OpenAI `gpt-4o-mini` 或兼容网关同等 model id |
+| **gpt-5.3-codex** | 关键路径（发布、迁移、支付、核心逻辑）；开发侧高难/升级终点 | OpenAI 或 OpenAI-兼容网关上的实际 model id |
+
+═══════════════════════════════════════════════════════════════════
+附录 C：依赖版本修订记录（与 package.json 对齐，避免文档漂移）
+═══════════════════════════════════════════════════════════════════
+
+说明：第二章「技术栈铁律」中的历史版本号保留为演进记录；**以本附录及仓库 `package.json` 为准**。修订须同步更新 `PROJECT_CONTEXT_CARD.md` 第三节。
+
+| 日期 | 包名 | 旧版（条文/历史） | 当前（package.json） | 原因摘要 | 批准人 |
+|------|------|-------------------|---------------------|----------|--------|
+| 2026-03 | `prisma` / `@prisma/client` | 5.x | ^6.0.1 | 团队已迁移至 Prisma 6，与现有 schema / 迁移一致 | 浔真 |
+| 2026-03 | `zod` | 3.x | ^4.3.6 | 与当前校验代码及生态一致 | 浔真 |
+| 2026-03 | `@hookform/resolvers` | 3.3.4（曾锁定） | ^5.2.2 | 与 Zod 4、RHF 当前组合一致；禁止在未回归前提下盲升 major | 浔真 |
+
+**AI 与协作者注意**：实现新代码时**不得**再假设 Prisma 5 / Zod 3 API；遇疑查官方迁移指南与本附录。
 
 ═══════════════════════════════════════════════════════════════════
 宪法签署

@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Deepdify / BrandCraft
 
-## Getting Started
+电商 AI 工作台（**Next.js 外壳** + **Dify 工作流**）。治理依据见仓库根目录 **`CONSTITUTION.md`**（含 **附录 C：依赖版本修订记录**）。
 
-First, run the development server:
+## 快速开始
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+浏览器打开 [http://localhost:3000](http://localhost:3000)。包管理请使用 **pnpm**（与 `packageManager` 字段一致）。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 常用脚本
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| 命令 | 说明 |
+|------|------|
+| `pnpm dev` | 本地开发 |
+| `pnpm build` / `pnpm start` | 生产构建与启动 |
+| `pnpm lint` | ESLint |
+| `pnpm test` / `pnpm test:run` | Vitest |
 
-## Learn More
+## 与 `prometheus-ai/` 目录的关系
 
-To learn more about Next.js, take a look at the following resources:
+仓库内可能存在 **`prometheus-ai/`** 子目录（独立 Turborepo 实验或克隆，**不是本应用交付物**）。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **主产品**为本目录下的 **deepdify** Next 应用（`src/`、`package.json` 于根目录）。
+- TypeScript / ESLint 已配置为**不检查** `prometheus-ai`（避免与主项目 Prisma schema 冲突）。
+- 长期建议：将 `prometheus-ai` **移出本仓库**或单独远程，以免协作混淆。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 文档
 
-## Deploy on Vercel
+- **项目上下文卡片**：`PROJECT_CONTEXT_CARD.md`
+- **架构与运维**：`docs/architecture/`、`docs/operations/`
+- **Phase 1 接口契约（草案）**：`docs/api/brand-analysis-contract.md`（`/api/ai/brand-analyze` → Dify Workflow）
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 技术栈（摘要）
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js **14.2.21** · React 18 · TypeScript strict · NextAuth v5 · Prisma 6 · Zod 4 · Tailwind · shadcn/ui  
+
+细节与版本以 **`package.json`** 与宪法 **附录 C** 为准。

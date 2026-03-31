@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Nested monorepo clone — linted separately with its own toolchain
+    "prometheus-ai/**",
   ]),
 ]);
 

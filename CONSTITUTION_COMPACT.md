@@ -1,7 +1,7 @@
 # BrandCraft宪法精简版 v3.0
 ## AI快速加载上下文
 
-> **加载确认语**："已加载BrandCraft宪法v3.0，当前阶段[Phase 0 Day 0]，阻断点[登录Bug修复中]，剩余文件预算[8/15]，将严格遵守技术栈锁定。"
+> **加载确认语**："已加载 BrandCraft 宪法 v3.0，当前阶段[Phase 0.8]，将严格遵守技术栈锁定；**依赖版本以 CONSTITUTION.md 附录 C + package.json 为准**。"
 
 ### 一、项目身份
 - **前身**：Deepdify Studio（Day 1-4，认证+Profile完成）
@@ -14,15 +14,17 @@
 - **TypeScript**: 5.x Strict
 - **NextAuth**: v5（修复后版本）
 - **表单**: React Hook Form 7.51.0（锁定）
-- **验证桥接**: @hookform/resolvers 3.3.4（禁止latest）
-- **数据库**: Neon PostgreSQL + Prisma 5.x
+- **验证桥接**: @hookform/resolvers ^5（与 Zod 4 配套；**完整版附录 C**）
+- **数据库**: Neon PostgreSQL + **Prisma ^6**（**完整版附录 C**，勿再写 Prisma 5）
 - **AI引擎**: Dify CE（Docker，禁用遥测）
+- **模型逻辑别名（不锁版本）**: `deepseek-default`；标准档双轨 `kimi-2.5`·`moonshot-kimi` + `gpt-4o-mini`；关键 `gpt-5.3-codex` — 宪法 **§2.3** + **附录B**
+- **模型路由（IDE/开发）**: `docs/architecture/MODEL_ROUTING.md`；**Backend-for-AI**: `DIFY_BASE_URL` + `DIFY_API_KEY`（宪法 **7.6** 与附录）
 
-### 三、当前状态（Phase 0 Day 0）
-- **阻断点**: 登录Bug（signIn()不触发，已修复为fetch方案）
-- **验证中**: test@deepdify.com登录→Dashboard跳转
-- **下一步**: Day 1 Dify CE部署（端口3001）
-- **文件预算**: 8/15已用（剩余7个）
+### 三、当前状态（Phase 0.8）
+- **收口**: 文档与 package.json 对齐（附录 C）；工程基线 tsc + ESLint + Vitest
+- **阻断点（Phase 1 前）**: Dify 侧至少 1 条工作流可演示；Session→Dify 代理设计落地
+- **下一步**: Phase 1.0 AI 首次贯通（见 PROJECT_CONTEXT_CARD.md）
+- **文件预算**: 宪法 15 文件硬限制需人工对照（实际代码已增长）
 
 ### 四、15文件硬限制（当前清单）
 已有8：
@@ -45,7 +47,7 @@
 15. [应急]
 
 ### 五、禁止清单（FORBIDDEN）
-- ❌ 升级Next.js/resolvers（已验证灾难）
+- ❌ 升级 Next.js 大版本（15/16 已验证冲突）；**@hookform/resolvers 勿盲升**（需全量回归）
 - ❌ 前端直接调AI API（必须用Backend-for-AI）
 - ❌ Next.js写AI业务逻辑（移Dify Workflow）
 - ❌ PowerShell写复杂代码（转义问题）
@@ -82,5 +84,5 @@
 - 敏感Prompt标注"不可记忆"
 
 ---
-宪法v3.0完整版见CONSTITUTION.md
-生效日期：[Day 0]
+宪法 v3.0 完整版见 **CONSTITUTION.md**（含 **附录 C：依赖版本修订记录**）
+生效日期：[Day 0] / 附录 C 修订：2026-03

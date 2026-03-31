@@ -11,117 +11,132 @@
 Git仓库: [待初始化远程仓库]
 
 演进历史:
-  - Day 1-4: Deepdify Studio（基础认证与Profile管理）
-  - Day 0: Phase 2结案，BrandCraft Phase 1启动（AI集成）
+  - Day 1-4: Deepdify Studio（基础认证与 Profile 管理）
+  - Day 0: Phase 2 结案，BrandCraft Phase 1 启动（AI 集成）
+  - 2026-03: **Phase 0.8** — 文档与依赖对齐、工程基线（tsc/ESLint/Vitest）就绪
+
+**Phase 0.8 定义（本阶段收口标准）**：
+  - 宪法 **附录 C** 与 `package.json` 一致
+  - 本卡片与仓库状态同步
+  - 主应用可回归：登录 → 品牌列表/创建（按当前功能范围）
+  - Phase 1 前：**Dify 侧至少 1 条工作流可演示**（Cloud 或自建，以路线图为准）
 
 ═══════════════════════════════════════════════════════════════
 二、当前状态（实时更新）
 ═══════════════════════════════════════════════════════════════
 
-当前阶段: Phase 0（Day 0）债务清理
-当前任务: 登录Bug修复（阻断点解除）
-状态: 🟡 进行中（代码已提供，待验证）
+当前阶段: **Phase 0.8**（Phase 0 收尾 → Phase 1 启动前）
+当前任务: 文档治理 + Dify 首次贯通准备（见宪法与路线图）
+状态: 🟡 工程基线已建立；**Dify 端到端与商业验证待闭环**
 
 最近Git提交:
-  - 待提交：登录修复（fetch方案替代signIn）
+  - 以仓库 `git log` 为准（卡片不逐条同步，避免漂移）
 
-文件预算: 8/15（剩余7个）
-成本消耗: ¥0（未开始AI调用）
+文件预算: 以宪法「15 文件硬限制」为准；实际代码量已增长，**需定期人工对照宪法第四章**
 
-阻断点:
-  - [ ] 登录修复验证（test@deepdify.com→Dashboard）
-  - [ ] Session持久化验证（刷新保持登录）
-  - [ ] 反向保护验证（已登录用户访问/login跳转）
+成本消耗: ¥0（未开始生产级 AI 调用计费）
 
-下一步（Day 1）:
-  1. Dify CE Docker部署（端口3001）
-  2. DeepSeek模型配置
-  3. 首个API连通测试（浏览器Console→Dify→中文回复）
+阻断点 / 验收:
+  - [ ] Phase 1：**Dify Cloud（或等价）首个工作流跑通**
+  - [ ] **Session → `/api/dify`（或未来 `/api/ai/*`）代理设计落地**（仅服务端密钥）
+  - [ ] **品牌上下文 → AI**：Phase 1 MVP 可采用 Prompt 注入（见架构评审结论）
+  - [ ] 宪法附录 C 已读且依赖无盲区
+
+下一步（Phase 1.0 方向）:
+  1. Dify 侧：注册/部署 + 模型与工作流
+  2. Next：认证 + 代理路由 + 限流/用量占位（与宪法 §2.2 响应格式一致）
+  3. 可选：本地 Dify CE（资源见运维评估，2C2G ECS 不足以跑全套）
 
 ═══════════════════════════════════════════════════════════════
-三、技术环境（精确版本）
+三、技术环境（精确版本 — 以 package.json 为准）
 ═══════════════════════════════════════════════════════════════
 
 操作系统: Windows 11
 IDE: VS Code / Cursor
 Shell: PowerShell（仅命令，不写复杂代码）
-包管理: pnpm
+包管理: **pnpm@9**（见 `packageManager` 字段；**勿与 npm/yarn 混用**）
 
-Node.js: 18+
-Next.js: 14.2.21（锁定）
+Node.js: **>=20**（engines）
+Next.js: **14.2.21**（锁定，禁止升 15/16）
 TypeScript: 5.x Strict
-数据库: Neon Serverless PostgreSQL（新加坡节点）
-ORM: Prisma 5.x
+数据库: Neon Serverless PostgreSQL（新加坡节点）或开发用本地/Compose PG
+ORM: **Prisma ^6**（见宪法 **附录 C**）
 
-AI引擎: Dify CE（待部署）
-模型: DeepSeek-V3（默认）/ GPT-4o-mini（标准）/ GPT-4o（高级）
+验证栈: **Zod ^4**、**@hookform/resolvers ^5**（与附录 C 一致）
+
+AI引擎: Dify（Cloud 优先于 MVP；CE Docker 见资源评估）
+模型: 以 Dify 控制台与宪法 **附录 B** 逻辑别名为准
 
 端口占用:
-  - 3000: Next.js开发服务器
-  - 3001: Dify CE（预留）
+  - 3000: Next.js 开发服务器
+  - 3001: Dify（若本地 Compose，按 `dify` 文档）
 
 ═══════════════════════════════════════════════════════════════
 四、关键文档位置
 ═══════════════════════════════════════════════════════════════
 
 宪法（必须加载）:
-  - CONSTITUTION.md（完整版）
-  - CONSTITUTION_COMPACT.md（AI快速加载版）
+  - CONSTITUTION.md（完整版，含 **附录 C 版本修订**）
+  - CONSTITUTION_COMPACT.md（AI 快速加载版 — 精简条可能与附录 C 不完全同步，**冲突时以完整版 + package.json 为准**）
 
 架构文档:
+  - docs/architecture/MODEL_ROUTING.md（模型路由：IDE 分层与升级）
   - docs/architecture/SYSTEM_DESIGN.md（系统架构）
   - docs/architecture/ROADMAP_30DAYS.md（30天路线图）
-  - docs/decisions/（ADR决策记录）
+  - docs/decisions/（ADR 决策记录）
 
 Dify资产:
-  - docs/prompts/（Prompt版本库）
+  - docs/prompts/（Prompt 版本库）
   - docs/tool-evaluation.md（开源工具评估）
+  - docs/operations/dify-api-fill-in.md（Dify API 与环境填写）
 
 运维文档:
   - docs/operations/SOP.md（标准操作流程）
-  - BUG_ARCHIVE.md（Bug档案）
+  - BUG_ARCHIVE.md（Bug 档案）
+
+API 契约（Phase 1 草案）:
+  - docs/api/brand-analysis-contract.md（`/api/ai/brand-analyze`）
+  - KNOWN_ISSUES.md（回归与依赖清理说明）
 
 ═══════════════════════════════════════════════════════════════
 五、快速检查清单（遇到问题时）
 ═══════════════════════════════════════════════════════════════
 
 代码没反应:
-  1. cat 文件路径 | findstr "关键词"（确认代码已保存）
-  2. VS Code显示白点？→ Ctrl+S保存
-  3. pnpm dev是否运行？→ 控制台无报错
-  4. 硬刷新：Ctrl+Shift+R
+  1. 确认文件已保存
+  2. `pnpm dev` 是否运行、控制台无报错
+  3. 硬刷新：Ctrl+Shift+R
 
 依赖问题:
-  1. 删除node_modules：Remove-Item -Recurse -Force node_modules
-  2. 重装：pnpm install
-  3. 锁定版本检查：package.json中resolvers是否为3.3.4
+  1. 删除 node_modules：`Remove-Item -Recurse -Force node_modules`（PowerShell）
+  2. 重装：`pnpm install`
+  3. 版本以 **package.json + 宪法附录 C** 为准（勿死记旧版 resolvers 3.3.4）
 
 数据库问题:
-  1. 连接测试：npx prisma db pull
-  2. 迁移状态：npx prisma migrate status
-  3. Studio查看：npx prisma studio
+  1. 连接：`npx prisma db pull`（慎用，会改 schema）
+  2. 迁移：`npx prisma migrate status`
+  3. Studio：`npx prisma studio`
 
-AI不工作:
-  1. Dify是否运行？docker compose ps
-  2. 端口3001可访问？http://localhost:3001
-  3. API Key有效？Dify控制台检查
-  4. 查看Network标签：/api/dify请求状态
+AI 不工作:
+  1. Dify 是否可用（Cloud 控制台或本地 `docker compose ps`）
+  2. `DIFY_BASE_URL` / `DIFY_API_KEY` 是否与 `src/lib/dify.ts` 约定一致
+  3. Network：`/api/dify` 或后续 `/api/ai/*` 状态码与响应体
 
 ═══════════════════════════════════════════════════════════════
 六、联系人与资源
 ═══════════════════════════════════════════════════════════════
 
 开发者: 浔真
-AI助手: Claude（通过Cursor）
+AI助手: Claude（通过 Cursor）
 技术顾问: [待补充]
 
 关键资源:
-  - Dify文档: https://docs.dify.ai
+  - Dify 文档: https://docs.dify.ai
   - DeepSeek API: https://platform.deepseek.com
-  - NextAuth文档: https://authjs.dev
+  - NextAuth 文档: https://authjs.dev
   - shadcn/ui: https://ui.shadcn.com
 
 ═══════════════════════════════════════════════════════════════
-最后更新: Day 0
-更新者: AI助手（基于宪法v3.0）
+最后更新: 2026-03（Phase 0.8 文档对齐）
+更新者: 项目组（依据评估报告修订）
 ═══════════════════════════════════════════════════════════════

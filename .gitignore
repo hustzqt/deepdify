@@ -44,3 +44,6 @@ next-env.d.ts
 # Environment variables
 .env.local
 .env.*.local
+
+# Nested workspace (incomplete clone / not main app)
+/prometheus-ai/

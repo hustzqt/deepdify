@@ -117,6 +117,8 @@ export function AvatarUploader({
         onDragOver={handleDragOver}
         className="relative h-24 w-24 min-h-24 min-w-24 flex-shrink-0 cursor-pointer group rounded-full overflow-hidden ring-2 ring-offset-2 ring-gray-200 group-hover:ring-blue-400 transition-all bg-gray-100"
       >
+        {/* Blob/data URLs and onError fallback are simpler with native img than next/image */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- user preview + dynamic fallback */}
         <img
           src={imageSrc}
           alt={name || '用户头像'}
