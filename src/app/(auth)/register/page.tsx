@@ -1,32 +1,24 @@
-import { RegisterForm } from '@/components/features/RegisterForm'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+'use client'
 
 /**
- * Registration page — layout mirrors login (centered card, Deepdify branding).
+ * Registration page under (auth) route group — URL remains /register.
+ * Uses shared RegisterForm (Zod + RHF + TanStack Query).
  */
-export default function RegisterPage() {
+import type { ReactElement } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { RegisterForm } from '@/components/features/RegisterForm'
+
+export default function RegisterPage(): ReactElement {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-[60vh] items-center justify-center">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">Deepdify Studio</CardTitle>
-          <CardDescription>创建账号，加入 AI 驱动的跨境电商工作台</CardDescription>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">创建账号</CardTitle>
+          <CardDescription>加入 Deepdify Studio</CardDescription>
         </CardHeader>
         <CardContent>
           <RegisterForm />
         </CardContent>
-        <CardFooter className="justify-center pt-0">
-          <p className="text-xs text-muted-foreground">
-            注册即表示您同意我们的服务条款与隐私政策
-          </p>
-        </CardFooter>
       </Card>
     </div>
   )

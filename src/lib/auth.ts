@@ -1,3 +1,14 @@
+/**
+ * NextAuth v5 (Auth.js) — server entry for session and auth routes.
+ *
+ * Exports (do not use legacy `getServerSession`):
+ * - `auth` — `await auth()` in Server Components / Route Handlers / server actions
+ * - `handlers` — pass `GET`/`POST` to `app/api/auth/[...nextauth]/route.ts`
+ * - `signIn` / `signOut`
+ *
+ * Credentials + JWT: we omit `PrismaAdapter` for sessions (JWT-only); user rows stay in Prisma.
+ * Password hashing uses `bcrypt` (package `bcrypt`, not `bcryptjs`).
+ */
 import type { NextAuthConfig, User } from "next-auth"
 import type { JWT } from "next-auth/jwt"
 import NextAuth from "next-auth"
@@ -32,12 +43,15 @@ const authConfig: NextAuthConfig = {
   trustHost: true,
   
   // ✅ 关键修复 2：设置 secret（用于加密 cookie）
-  // 生产环境请使用环境变量：secret: process.env.AUTH_SECRET,
-  secret: process.env.AUTH_SECRET || "your-development-secret-key-min-32-chars-long",
+  // Prefer AUTH_SECRET (Auth.js); accept NEXTAUTH_SECRET for legacy .env compatibility.
+  secret:
+    process.env.AUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    "your-development-secret-key-min-32-chars-long",
   
-  session: { 
-    strategy: "jwt", 
-    maxAge: 30 * 24 * 60 * 60 // 30天
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   
   pages: { 
@@ -46,15 +60,16 @@ const authConfig: NextAuthConfig = {
     error: "/login" 
   },
   
-  // ✅ 关键修复 3：Cookie 配置（localhost 必须 secure: false）
+  // Cookie: on HTTP (e.g. localhost) secure:true prevents the browser from sending cookies.
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production", // localhost 自动为 false
+        sameSite: 'lax',
+        path: '/',
+        // Dev (HTTP): false — required for session cookie to work. Prod (HTTPS): true.
+        secure: process.env.NODE_ENV === 'production',
       },
     },
     callbackUrl: {
