@@ -1,85 +1,102 @@
-# 项目记忆（Project Memory）
+# Deepdify Studio — 项目记忆文件
 
-> 项目根目录：`deepdify`（BrandCraft / Deepdify Evolution）  
-> 快照目的：记录**截至 Phase 1 完成 / Phase 1.5 启动**的目标、交付、环境、过程与问题，供后续迭代对照。
-
----
-
-## 1. 项目目标（Phase 1 范围内）
-
-| 目标 | 说明 |
-|------|------|
-| Backend-for-AI | 浏览器不接触 Dify Key；由 Next.js 服务端代理 Dify Workflow |
-| 契约一致 | `POST /api/ai/brand-analyze` 与 `docs/api/brand-analysis-contract.md` 对齐；响应 `{ success, data?, error? }` |
-| 认证 | 仅登录用户；**NextAuth v5 `auth()`**（不使用 legacy `getServerSession`） |
-| 基本治理 | `Zod` 校验、内存限流、超时、错误码与日志 |
-| 可演示闭环 | 品牌页可发起分析并展示结果（JSON/后续结构化） |
+> 用途：跨对话持久化关键决策、教训和状态  
+> 规则：每个 Phase 结案时必须更新；每次新对话开始时必须读取  
+> 最后更新：2026-03-28
 
 ---
 
-## 2. 已交付结果（仓库）
+## 1. 项目基本信息
 
-| 类型 | 路径 / 说明 |
-|------|----------------|
-| API 路由 | `src/app/api/ai/brand-analyze/route.ts` |
-| 校验 | `src/lib/validations/brand-analyze.ts` |
-| 单测 | `src/__tests__/brand-analyze-schema.test.ts`（请求体 Schema） |
-| 前端面板 | `src/components/brands/BrandAiAnalyzePanel.tsx`（`credentials: 'include'`） |
-| 页面 | `src/app/brands/page.tsx`（列表嵌面板）、`src/app/brands/[id]/page.tsx`（详情预填、`brandId`） |
-| 主应用位置 | **根目录 `src/`**（非 `prometheus-ai/apps/web`） |
-
-**环境变量（服务端）**：`DIFY_BASE_URL`、`DIFY_BRAND_ANALYSIS_KEY` 或 `DIFY_API_KEY`；仅存 `.env.local` 等已忽略文件。
-
----
-
-## 3. 关键过程（可复用）
-
-1. 契约先行，再定路径与 Dify 输入映射（`brand_name`、`industry` 等）。
-2. 与 `src/lib/auth.ts` 一致使用 **`await auth()`**。
-3. 对 Dify 响应使用 `unknown` + 窄化；`outputs` 对 `result` / 单键 / 整包做容错。
-4. 浏览器调用使用 **`fetch` + `credentials: 'include'`** 携带 Session Cookie。
+| 项 | 值 |
+|----|-----|
+| 项目名称 | Deepdify Studio |
+| 前身 | BrandCraft（已重构整合） |
+| 技术栈 | Next.js 14 + Prisma + NextAuth + Tailwind + shadcn/ui |
+| AI 基础设施 | Dify Cloud SaaS + DeepSeek API |
+| 数据库 | PostgreSQL（本地 Docker / 生产阿里云） |
+| 部署目标 | 阿里云 ECS（deepdify.com） |
+| 仓库结构 | 单体应用，根目录即主项目（不使用 monorepo） |
 
 ---
 
-## 4. 技术环境（摘要）
+## 2. 关键决策记录
 
-| 项 | 说明 |
-|----|------|
-| Node | `>=20`（见 `package.json` engines） |
-| Next.js | **14.2.21**（项目约定锁版本） |
-| 包管理 | **pnpm@9**（`packageManager` 字段） |
-| 数据库 | PostgreSQL + Prisma；品牌模型 `Brand` |
-| 认证 | NextAuth v5；JWT Session；开发环境 HTTP cookie 策略见 `auth.ts` |
-
----
-
-## 5. 已知问题与风险
-
-| 类别 | 内容 |
-|------|------|
-| 文档漂移 | `PROJECT_CONTEXT_CARD.md` 等若仍写旧 Phase，需与当前能力对齐 |
-| 限流 | 进程内 `Map`，多实例不共享；生产需 Redis 或网关 |
-| Dify 输出 | 变量名/结构若与假设不一致，需按真实 JSON 调整解析 |
-| 用量 | `tokensUsed` 依赖 Dify 返回路径，可能常为 0；Phase 2 定义事实来源 |
-| 仓库卫生 | 未跟踪文件、嵌套 monorepo 产物需 `.gitignore` 与边界策略 |
-| 安全 | 密钥若曾暴露应轮换；日志避免打印敏感内容 |
+| 日期 | 决策 | 理由 | 影响范围 |
+|------|------|------|----------|
+| Phase 1 | Dify Cloud SaaS 而非本地 Docker 部署 | 零运维、快速验证、数据可接受 | AI 工作流、API 调用方式 |
+| Phase 1 | DeepSeek 为主模型，预留多模型切换 | 成本最低（约 GPT-4 的 1/50）、中文优秀 | Token 计费、模型配置 |
+| Phase 1 | 三层 Token 互验模型（Dify 回报 + 本地估算 + 月底对账） | 平衡精度与开发成本 | 计费系统设计 |
+| Phase 1 | 知识库三级结构（L1 平台规则 / L2 行业 / L3 商家私有） | 隔离公共知识与私有数据，支持多租户 | 知识库模型、权限设计 |
+| Phase 1 | 不使用 monorepo 分包，主应用即根目录 | 简化构建链，避免 turborepo/workspace 配置开销 | 项目结构、构建、部署 |
+| Phase 1 | 开源工具 2 小时标记策略 | 评估超 2 小时未跑通则换方案，不阻塞 MVP | 技术选型流程 |
+| Phase 1 | 宪法版本升级至 v0.3.1 + 附录 C 依赖锁定 | 确保依赖版本一致性 | 开发环境稳定性 |
 
 ---
 
-## 6. 后续方向（摘要，详见 `docs/DEV_PLAN.md`）
+## 3. Phase 结案摘要
 
-- 真实工作流验收 + 脱敏响应样例。  
-- `AiUsageLog`、Redis 限流、结果结构化 UI。  
-- 文档与卡片同步、主应用路径说明。
+### Phase 1：项目启动与文档体系（已完成）
+
+**状态**：✅ 已完成
+
+**产出**：
+
+- `CONSTITUTION.md` v0.3.1（含附录 A/B/C）
+- `PROJECT_CONTEXT_CARD.md`
+- `DEV_PLAN.md`
+- `PROJECT_MEMORY.md`（本文件）
+
+**遗留**：
+
+- `pnpm dev` 未验证（Phase 1.5 Day 01 执行）
+- Dify Cloud 未注册（Phase 1.5 Day 02 执行）
+
+**教训**：
+
+- 文档先行是正确的，但不能无限延伸文档阶段
+- 必须设置硬性截止点进入代码阶段
 
 ---
 
-## 7. 参考索引
+## 4. 技术债务清单
 
-- `docs/DEV_PLAN.md` — 开发计划与路线图  
-- `docs/api/brand-analysis-contract.md` — API 契约  
-- `CONSTITUTION.md` — 项目宪法与附录 C  
+| ID | 描述 | 严重性 | 计划解决 |
+|----|------|--------|----------|
+| TD-001 | Tailwind bg-opacity 内联样式临时修复 | 低 | Phase 3 |
+| TD-002 | prometheus-ai 仓库边界未清理 | 低 | Phase 6 |
+| TD-003 | 生产环境日志策略未定义 | 中 | Phase 6 Day 29 |
 
 ---
 
-*本文件为状态快照；不替代宪法与正式契约文档。*
+## 5. 资源清单
+
+| 资源 | 状态 | 备注 |
+|------|------|------|
+| DeepSeek API Key | ✅ 已有 | minimax 账号 |
+| 阿里云 ECS | ✅ 已有 | 生产服务器 |
+| 域名 deepdify.com | ✅ 已有 | 主域名 |
+| 域名 meptai.com | ✅ 已有 | 备用 |
+| Docker Desktop | ✅ 本地已装 | Windows |
+| Dify Cloud 账号 | ⏳ 待注册 | Phase 1.5 Day 02 |
+| Stripe 账号 | ⏳ 待注册 | Phase 5 Day 25 |
+
+---
+
+## 6. 每日状态追踪
+
+| Day | 日期 | 状态 | 关键产出 | 阻塞 |
+|-----|------|------|----------|------|
+| 01 | - | ⏳ 待开始 | pnpm dev 回归 | - |
+| 02 | - | ⏳ 待开始 | Dify Cloud 联通 | - |
+| 03 | - | ⏳ 待开始 | 接口契约文档 | - |
+
+（后续每日执行后填入）
+
+---
+
+## 7. 变更日志
+
+| 日期 | 变更内容 |
+|------|----------|
+| 2026-03-28 | 初始化 PROJECT_MEMORY.md（完整版） |
