@@ -3,7 +3,7 @@
 /**
  * Client panel: calls POST /api/ai/brand-analyze with session cookie.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,7 +18,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Skeleton } from '@/components/ui/skeleton'
+import { BrandAnalysisResultCard } from '@/components/brands/BrandAnalysisResultCard'
 
 const BRAND_ANALYZE_PATH = '/api/ai/brand-analyze'
 
@@ -86,6 +87,8 @@ export function BrandAiAnalyzePanel({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<SuccessData | null>(null)
+  /** Prevents overlapping requests before `loading` state commits (double-click). */
+  const analyzeInFlightRef = useRef(false)
 
   useEffect(() => {
     setBrandName(initialBrandName)
@@ -100,10 +103,19 @@ export function BrandAiAnalyzePanel({
     initialBrandDescription,
   ])
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
+  /**
+   * Runs brand analysis; guards against duplicate submission and ensures loading clears on all paths.
+   */
+  async function handleAnalyze(): Promise<void> {
+    if (loading || analyzeInFlightRef.current) return
+    if (!brandName.trim() || !industry.trim()) {
+      setError('请填写品牌名称和行业')
+      return
+    }
+
     setError(null)
     setSuccess(null)
+    analyzeInFlightRef.current = true
     setLoading(true)
     try {
       const res = await fetch(BRAND_ANALYZE_PATH, {
@@ -131,8 +143,14 @@ export function BrandAiAnalyzePanel({
       const message = err instanceof Error ? err.message : 'Network error'
       setError(message)
     } finally {
+      analyzeInFlightRef.current = false
       setLoading(false)
     }
+  }
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    void handleAnalyze()
   }
 
   return (
@@ -198,7 +216,21 @@ export function BrandAiAnalyzePanel({
 
           {error ? (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="flex flex-col gap-2">
+                <span>{error}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-fit shrink-0"
+                  disabled={loading}
+                  onClick={() => {
+                    void handleAnalyze()
+                  }}
+                >
+                  重试
+                </Button>
+              </AlertDescription>
             </Alert>
           ) : null}
         </CardContent>
@@ -224,14 +256,20 @@ export function BrandAiAnalyzePanel({
         </CardFooter>
       </form>
 
-      {success ? (
+      {loading ? (
         <CardContent className="pt-0">
-          <p className="text-sm font-medium mb-2">分析结果</p>
-          <ScrollArea className="h-[min(420px,50vh)] rounded-md border bg-muted/30 p-3">
-            <pre className="text-xs font-mono whitespace-pre-wrap break-words">
-              {JSON.stringify(success.result, null, 2)}
-            </pre>
-          </ScrollArea>
+          <p className="text-sm font-medium mb-3">分析结果</p>
+          <div className="space-y-4" aria-busy="true" aria-live="polite">
+            <Skeleton className="h-8 w-3/4 max-w-md" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </CardContent>
+      ) : null}
+      {!loading && success ? (
+        <CardContent className="pt-0">
+          <p className="text-sm font-medium mb-3">分析结果</p>
+          <BrandAnalysisResultCard result={success.result} />
         </CardContent>
       ) : null}
     </Card>
