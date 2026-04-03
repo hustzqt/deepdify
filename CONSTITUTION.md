@@ -38,7 +38,7 @@ Phase 4（Day 22-30）：上线获客与迭代
 
 2.1 前端层（Next.js外壳 30%）
 ----------------------------
-框架：        Next.js 14.2.21（App Router）⚠️ 禁止升级到15/16
+框架：        Next.js 14.2.35（App Router）⚠️ 禁止升级到15/16
 语言：        TypeScript 5.x（Strict Mode: true, noImplicitAny: true）
 UI库：        shadcn/ui + Tailwind CSS（现有组件100%复用）
 状态管理：    Zustand（轻量，禁止Redux/MobX）
@@ -409,7 +409,7 @@ Claude-3.5：     Input ¥0.216/1K | Output ¥1.08/1K （高级）
 
 AI确认语：
   "已加载BrandCraft宪法v3.0，理解当前阶段为[Phase X Day Y]，
-   阻断点为[如有]，将严格遵守技术栈锁定（Next.js 14.2.21, resolvers 3.3.4），
+   阻断点为[如有]，将严格遵守技术栈锁定（Next.js 14.2.35, resolvers 3.3.4），
    剩余文件预算[X/15]。"
 
 7.2 编码前Checklist

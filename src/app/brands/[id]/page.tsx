@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Button } from '@/components/ui/button'
-import { BrandAiAnalyzePanel } from '@/components/brands/BrandAiAnalyzePanel'
+import { BrandDetailClient } from '@/components/brands/BrandDetailClient'
 
 interface PageProps {
   params: { id: string }
@@ -48,13 +48,14 @@ export default async function BrandDetailPage(props: PageProps): Promise<ReactEl
         ) : null}
       </div>
 
-      <BrandAiAnalyzePanel
-        key={brand.id}
-        initialBrandId={brand.id}
-        initialBrandName={brand.name}
-        initialIndustry={brand.industry}
-        initialTargetAudience={brand.targetAudience ?? ''}
-        initialBrandDescription={brand.description ?? ''}
+      <BrandDetailClient
+        brand={{
+          id: brand.id,
+          name: brand.name,
+          industry: brand.industry,
+          description: brand.description,
+          targetAudience: brand.targetAudience,
+        }}
       />
     </div>
   )

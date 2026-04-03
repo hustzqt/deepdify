@@ -16,9 +16,13 @@ npx prisma generate
 
 是否删除 `pnpm-lock.yaml` 由团队决定：**删除**会全量解析依赖，利于消除漂移；**保留**则更可复现。勿在未提交锁文件前于 CI 依赖「无锁」安装。
 
-## Next.js 14.2.21 安全通告
+## Next.js 14.x 安全补丁
 
-`pnpm install` 可能提示 next@14.2.21 deprecated（安全更新）。宪法锁定 **14.x**；是否仅升 **14.x 补丁** 需单独评估并与宪法「禁止升 15/16」条款对照。
+仓库已跟踪 **Next.js 14.2.35**（14.x 补丁线，符合宪法「禁止升 15/16」）。若再次出现弃用提示，在 **14.2.x** 范围内跟进补丁即可。
+
+## `next build` 时 ESLint 选项告警
+
+若出现 `Invalid Options: useEslintrc, extensions`，多为 **ESLint 9** 与 **eslint-config-next 14** 的 peer 期望不一致。当前构建仍可完成；后续可将 ESLint 对齐到 Next 官方推荐版本，或单独收紧 `next lint` 配置。
 
 ## Prisma generate 在部分环境 EPERM
 

@@ -1,17 +1,18 @@
 // Ref: docs/api/brand-analysis-contract.md
-// Backend-for-AI: Dify Workflow proxy with session auth and in-memory rate limit (dev).
+// Backend-for-AI: Dify Workflow proxy with session auth and Redis-backed sliding-window rate limit.
 
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
+import { extractDifyUsageMetrics } from '@/lib/ai/extract-dify-usage'
+import { toPrismaJson } from '@/lib/ai/prisma-json'
+import { prisma } from '@/lib/prisma'
+import { checkBrandAnalyzeRateLimit } from '@/lib/redis-rate-limit'
 import { brandAnalyzeRequestSchema } from '@/lib/validations/brand-analyze'
 
 export const dynamic = 'force-dynamic'
 
-const RATE_LIMIT = 10
-const RATE_WINDOW_MS = 60 * 60 * 1000
-
-/** In-memory rate limit per user (resets per Node process; use Redis in production). */
-const rateLimit = new Map<string, { count: number; resetAt: number }>()
+/** Vercel serverless: allow long Dify blocking calls (Hobby plan still caps at ~10s). */
+export const maxDuration = 60
 
 /**
  * Extract primary output from Dify workflows/run JSON (blocking).
@@ -45,20 +46,6 @@ function normalizeAnalysisResult(raw: unknown): unknown {
   }
 }
 
-function getTokensUsed(difyJson: unknown): number {
-  if (typeof difyJson !== 'object' || difyJson === null) return 0
-  const root = difyJson as {
-    data?: { usage?: { total_tokens?: number }; total_tokens?: number }
-    usage?: { total_tokens?: number }
-  }
-  return (
-    root.data?.usage?.total_tokens ??
-    root.data?.total_tokens ??
-    root.usage?.total_tokens ??
-    0
-  )
-}
-
 /**
  * POST /api/ai/brand-analyze — proxy to Dify Workflow (blocking).
  */
@@ -79,14 +66,13 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const userId = session.user.id
 
-  const now = Date.now()
-  let entry = rateLimit.get(userId)
-  if (!entry || now >= entry.resetAt) {
-    entry = { count: 0, resetAt: now + RATE_WINDOW_MS }
-    rateLimit.set(userId, entry)
-  }
-  if (entry.count >= RATE_LIMIT) {
-    const retryAfter = Math.ceil((entry.resetAt - now) / 1000)
+  const rate = await checkBrandAnalyzeRateLimit(userId)
+  if (!rate.success) {
+    const now = Date.now()
+    const retryAfter = Math.max(
+      1,
+      Math.ceil((rate.resetAt.getTime() - now) / 1000)
+    )
     return NextResponse.json(
       {
         success: false,
@@ -94,12 +80,12 @@ export async function POST(request: Request): Promise<NextResponse> {
           code: 'RATE_LIMITED',
           message: `Too many requests. Please wait ${retryAfter} seconds.`,
           retryAfter,
+          resetAt: rate.resetAt.toISOString(),
         },
       },
       { status: 429 }
     )
   }
-  entry.count += 1
 
   let body: unknown
   try {
@@ -162,6 +148,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   try {
+    const requestStartedAt = Date.now()
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 30_000)
 
@@ -227,6 +214,54 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const result = normalizeAnalysisResult(analysisRaw)
 
+    const usage = extractDifyUsageMetrics(difyJson)
+    const durationMs = Date.now() - requestStartedAt
+
+    let resolvedBrandId: string | null = null
+    if (brandId) {
+      const owned = await prisma.brand.findFirst({
+        where: { id: brandId, userId },
+        select: { id: true },
+      })
+      resolvedBrandId = owned?.id ?? null
+    }
+
+    let usageLogId: string | null = null
+    try {
+      const log = await prisma.aiUsageLog.create({
+        data: {
+          userId,
+          brandId: resolvedBrandId,
+          workflowType: 'brand-analyze',
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          totalTokens: usage.totalTokens,
+          costUsd: usage.costUsd,
+          status: 'success',
+          durationMs,
+        },
+        select: { id: true },
+      })
+      usageLogId = log.id
+    } catch (logErr) {
+      console.error('[brand-analyze] AiUsageLog create failed:', logErr)
+    }
+
+    if (resolvedBrandId && usageLogId) {
+      try {
+        await prisma.brandAnalysisResult.create({
+          data: {
+            brandId: resolvedBrandId,
+            userId,
+            result: toPrismaJson(result),
+            usageLogId,
+          },
+        })
+      } catch (persistErr) {
+        console.error('[brand-analyze] BrandAnalysisResult create failed:', persistErr)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -234,7 +269,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         brandId: brandId ?? null,
         result,
         model: 'workflow',
-        tokensUsed: getTokensUsed(difyJson),
+        tokensUsed: usage.totalTokens,
         createdAt: new Date().toISOString(),
       },
     })

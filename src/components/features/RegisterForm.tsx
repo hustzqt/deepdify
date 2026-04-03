@@ -29,11 +29,18 @@ export function RegisterForm() {
 
   const mutation = useMutation({
     mutationFn: registerUser,
-    onSuccess: (data) => {
+  })
+
+  /**
+   * Use mutateAsync + explicit redirect so navigation always runs after a resolved
+   * registration (TanStack Query v5 global onSuccess can be unreliable in some setups).
+   */
+  const onSubmit = handleSubmit(async (values: RegisterInput) => {
+    try {
+      const data = await mutation.mutateAsync(values)
       toast.success(data.message || '注册成功，请登录')
       router.push('/login')
-    },
-    onError: (error: unknown) => {
+    } catch (error: unknown) {
       if (error instanceof RegisterApiError) {
         toast.error(error.message)
         return
@@ -41,13 +48,13 @@ export function RegisterForm() {
       const message =
         error instanceof Error ? error.message : '注册失败，请重试'
       toast.error(message)
-    },
+    }
   })
 
   return (
     <form
       method="post"
-      onSubmit={handleSubmit((values) => mutation.mutate(values))}
+      onSubmit={onSubmit}
       className="space-y-4"
     >
       <div className="space-y-2">

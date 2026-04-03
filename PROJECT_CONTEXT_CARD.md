@@ -57,7 +57,7 @@ Shell: PowerShell（仅命令，不写复杂代码）
 包管理: **pnpm@9**（见 `packageManager` 字段；**勿与 npm/yarn 混用**）
 
 Node.js: **>=20**（engines）
-Next.js: **14.2.21**（锁定，禁止升 15/16）
+Next.js: **14.2.35**（14.x 补丁线，禁止升 15/16）
 TypeScript: 5.x Strict
 数据库: Neon Serverless PostgreSQL（新加坡节点）或开发用本地/Compose PG
 ORM: **Prisma ^6**（见宪法 **附录 C**）

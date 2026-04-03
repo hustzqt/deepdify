@@ -29,6 +29,8 @@ export interface BrandAiAnalyzePanelProps {
   initialIndustry?: string
   initialTargetAudience?: string
   initialBrandDescription?: string
+  /** Called after a successful analysis response (HTTP 200 + success payload). */
+  onAnalysisSuccess?: () => void
 }
 
 type SuccessData = {
@@ -74,6 +76,7 @@ export function BrandAiAnalyzePanel({
   initialIndustry = '',
   initialTargetAudience = '',
   initialBrandDescription = '',
+  onAnalysisSuccess,
 }: BrandAiAnalyzePanelProps) {
   const [brandName, setBrandName] = useState(initialBrandName)
   const [industry, setIndustry] = useState(initialIndustry)
@@ -123,6 +126,7 @@ export function BrandAiAnalyzePanel({
         return
       }
       setSuccess(parsed.data)
+      onAnalysisSuccess?.()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Network error'
       setError(message)
