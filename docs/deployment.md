@@ -1,6 +1,7 @@
 # 部署指南（Vercel + Neon + Upstash）
 
-> 与路线 A Day 2 对齐；域名与项目名请替换为你的实际值。
+> 与路线 A Day 2 对齐；域名与项目名请替换为你的实际值。  
+> **生产上线分步勾选清单**见 [PHASE_B_CHECKLIST.md](./PHASE_B_CHECKLIST.md)。
 
 ## 1. 前置条件
 
@@ -78,3 +79,25 @@ npx prisma migrate deploy
 ## 7. 自定义域名
 
 在 Vercel → Domains 绑定后，将 `NEXTAUTH_URL` 与 `NEXT_PUBLIC_APP_URL` 改为新域名并 **Redeploy**。
+
+## 8. 可观测性（Day 4）
+
+### 健康检查
+
+- **GET** `/api/health`：执行 `SELECT 1`，数据库可达时返回 `200` 与 `{ status: "ok", database: "ok", timestamp }`；失败时返回 **503** 与 `database: "unavailable"`。
+- 可用于 UptimeRobot、Vercel Cron 或负载均衡探活（勿缓存：`force-dynamic`）。
+
+### 结构化日志
+
+关键 API 使用 `src/lib/api-logger.ts` 前缀，便于在 **Vercel → Project → Logs**（或 **Deployments → 某次部署 → Functions**）中按关键词过滤：
+
+| 前缀 | 路由 |
+|------|------|
+| `[health]` | `/api/health` |
+| `[brand-analyze]` | `/api/ai/brand-analyze` |
+| `[ai-usage]` | `/api/ai/usage` |
+| `[ai-usage-summary]` | `/api/ai/usage/summary` |
+
+### Sentry（可选）
+
+未默认集成。若需要错误聚合与告警，可后续执行 `pnpm add @sentry/nextjs` 并按官方向导配置；当前以 Vercel 函数日志 + 上述前缀为主。

@@ -3,7 +3,7 @@
 /**
  * Fetches and lists persisted brand analysis results (newest first).
  */
-import { useCallback, useEffect, useState, type ReactElement } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react'
 import { History } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -42,10 +42,34 @@ export function BrandAnalysisHistory({
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [limit, setLimit] = useState(HISTORY_PAGE_SIZE)
+  /** Which row is expanded (accordion); default follows newest row when list head changes. */
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  /** Tracks latest-first row id so we expand newest on new analysis without resetting on "load more". */
+  const prevHeadIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     setLimit(HISTORY_PAGE_SIZE)
   }, [brandId])
+
+  useEffect(() => {
+    prevHeadIdRef.current = null
+  }, [brandId])
+
+  useEffect(() => {
+    if (!items?.length) {
+      setExpandedId(null)
+      return
+    }
+    const first = items[0]
+    if (!first) {
+      return
+    }
+    const headId = first.id
+    if (prevHeadIdRef.current !== headId) {
+      prevHeadIdRef.current = headId
+      setExpandedId(headId)
+    }
+  }, [items])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -134,6 +158,10 @@ export function BrandAnalysisHistory({
                 id: row.id,
                 createdAt: row.createdAt,
                 result: row.result,
+              }}
+              expanded={expandedId === row.id}
+              onToggle={() => {
+                setExpandedId((prev) => (prev === row.id ? null : row.id))
               }}
             />
           ))}

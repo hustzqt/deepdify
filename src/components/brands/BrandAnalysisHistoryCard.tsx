@@ -3,7 +3,7 @@
 /**
  * Single history row: summary header + expand/collapse for full BrandAnalysisResultCard.
  */
-import { useState, type ReactElement } from 'react'
+import { type ReactElement } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,6 +23,10 @@ export interface BrandAnalysisHistoryRow {
 
 export interface BrandAnalysisHistoryCardProps {
   item: BrandAnalysisHistoryRow
+  /** Controlled expanded state (accordion managed by parent). */
+  expanded: boolean
+  /** Toggle expand/collapse for this row. */
+  onToggle: () => void
 }
 
 /**
@@ -30,8 +34,9 @@ export interface BrandAnalysisHistoryCardProps {
  */
 export function BrandAnalysisHistoryCard({
   item,
+  expanded,
+  onToggle,
 }: BrandAnalysisHistoryCardProps): ReactElement {
-  const [expanded, setExpanded] = useState(false)
   const normalized = normalizeBrandAnalysis(item.result)
   const confidencePct =
     normalized.confidence_score > 0
@@ -61,7 +66,7 @@ export function BrandAnalysisHistoryCard({
           aria-expanded={expanded}
           aria-controls={`history-detail-${item.id}`}
           id={`history-toggle-${item.id}`}
-          onClick={() => setExpanded((v) => !v)}
+          onClick={() => onToggle()}
         >
           {expanded ? (
             <ChevronUp className="h-4 w-4" aria-hidden />
