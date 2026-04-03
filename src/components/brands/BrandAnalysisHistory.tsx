@@ -14,8 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
+import { BrandAnalysisHistoryCard } from '@/components/brands/BrandAnalysisHistoryCard'
 
 export interface BrandAnalysisHistoryProps {
   brandId: string
@@ -31,6 +31,9 @@ type HistoryItem = {
   createdAt: string
 }
 
+const HISTORY_PAGE_SIZE = 10
+const HISTORY_MAX_LIMIT = 50
+
 export function BrandAnalysisHistory({
   brandId,
   refreshKey = 0,
@@ -38,13 +41,18 @@ export function BrandAnalysisHistory({
   const [items, setItems] = useState<HistoryItem[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [limit, setLimit] = useState(HISTORY_PAGE_SIZE)
+
+  useEffect(() => {
+    setLimit(HISTORY_PAGE_SIZE)
+  }, [brandId])
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
       const res = await fetch(
-        `/api/brands/${encodeURIComponent(brandId)}/analysis-history?limit=20`,
+        `/api/brands/${encodeURIComponent(brandId)}/analysis-history?limit=${limit}`,
         { credentials: 'include' }
       )
       const json: unknown = await res.json().catch(() => null)
@@ -70,7 +78,7 @@ export function BrandAnalysisHistory({
     } finally {
       setLoading(false)
     }
-  }, [brandId])
+  }, [brandId, limit])
 
   useEffect(() => {
     void load()
@@ -113,24 +121,38 @@ export function BrandAnalysisHistory({
         ) : null}
 
         {!error && items && items.length === 0 ? (
-          <p className="text-muted-foreground text-sm">暂无历史记录。完成一次分析后将自动保存。</p>
+          <p className="text-muted-foreground text-sm">
+            暂无分析历史。完成一次分析后将自动保存。
+          </p>
         ) : null}
 
-        {items?.map((row) => (
-          <div
-            key={row.id}
-            className="rounded-lg border border-foreground/10 bg-muted/20 p-3"
+        <div className="space-y-3">
+          {items?.map((row) => (
+            <BrandAnalysisHistoryCard
+              key={row.id}
+              item={{
+                id: row.id,
+                createdAt: row.createdAt,
+                result: row.result,
+              }}
+            />
+          ))}
+        </div>
+
+        {!error && items && items.length >= limit && limit < HISTORY_MAX_LIMIT ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            disabled={loading}
+            onClick={() =>
+              setLimit((n) => Math.min(n + HISTORY_PAGE_SIZE, HISTORY_MAX_LIMIT))
+            }
           >
-            <p className="text-muted-foreground mb-2 text-xs">
-              {new Date(row.createdAt).toLocaleString()}
-            </p>
-            <ScrollArea className="max-h-[min(280px,40vh)] rounded-md border bg-background/50 p-2">
-              <pre className="text-xs font-mono whitespace-pre-wrap break-words">
-                {JSON.stringify(row.result, null, 2)}
-              </pre>
-            </ScrollArea>
-          </div>
-        ))}
+            {loading ? '加载中…' : '加载更多'}
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   )
